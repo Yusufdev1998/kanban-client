@@ -1,7 +1,12 @@
 import BoardContainer from "./BoardContainer";
 import PrimaryBtn from "./PrimaryBtn";
 
-const Content = ({ columns }) => {
+const Content = ({
+  columns,
+  columnLoading,
+  setTaskModal,
+  setEditTaskModal,
+}) => {
   return (
     <div className="pl-[2px]">
       <div className="px-6 flex items-center justify-between pt-[29px] shadow-sm pb-[37px] bg-white">
@@ -15,6 +20,7 @@ const Content = ({ columns }) => {
             color={"#fff"}
             disabled={columns?.length == 0}
             padding={"15px 25px 14px 24px"}
+            onClick={() => setTaskModal(true)}
             bg={"var(--primary-color)"}
           >
             Add New Task
@@ -35,8 +41,12 @@ const Content = ({ columns }) => {
       </div>
 
       <main>
-        {columns.length > 0 ? (
-          <BoardContainer columns={columns}></BoardContainer>
+        {columns.length > 0 || columnLoading ? (
+          <BoardContainer
+            columnLoading={columnLoading}
+            columns={columns}
+            setEditTaskModal={setEditTaskModal}
+          ></BoardContainer>
         ) : (
           <div className="empty_board">
             <span className="text-xl block text-[var(--clr-400)] mb-8">

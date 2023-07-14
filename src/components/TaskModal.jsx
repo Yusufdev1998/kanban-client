@@ -1,28 +1,43 @@
-import { createBoard } from "../utils/request";
+import { createBoard, createTask } from "../utils/request";
 import PrimaryBtn from "./PrimaryBtn";
 import { useState } from "react";
 
-const BasicModal = ({ modal, setModal, setBoards }) => {
-  const [columns, setColumns] = useState([]);
-  const [boardName, setBoardName] = useState("");
+const TaskModal = ({ modal, setModal, columns, setColumns }) => {
+  const [subtasks, setSubtasks] = useState([]);
+  const [task, setTask] = useState({
+    title: "",
+    description: "",
+    status_id: "",
+  });
   const [loading, setLoading] = useState(false);
   const handleSubmit = async e => {
     e.preventDefault();
-    if (boardName) {
+    if (task.title && task.status_id) {
       const data = {
-        name: boardName,
-        columns: columns.map(col => col.name),
+        ...task,
+        subtasks: subtasks.map(col => col.name),
       };
       setLoading(true);
       try {
-        const resData = await createBoard(data);
-        setBoards(prev => {
-          return [...prev, resData.data];
+        const resData = await createTask(data);
+        setColumns(prev => {
+          return prev.map(col => {
+            if (col.id == task.status_id) {
+              return {
+                ...col,
+                tasks: [...col.tasks, resData.data],
+              };
+            } else return col;
+          });
         });
+
         setModal(false);
-        setBoardName("");
-        setColumns([]);
-        setBoardName("");
+        setTask({
+          title: "",
+          description: "",
+          status_id: "",
+        });
+        setSubtasks([]);
       } catch (error) {
         console.log(error);
       }
@@ -31,12 +46,12 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
   };
 
   const addColumn = () => {
-    setColumns(prev => {
+    setSubtasks(prev => {
       return [...prev, { name: "" }];
     });
   };
   const changeColumn = (value, index) => {
-    setColumns(prev => {
+    setSubtasks(prev => {
       return prev.map((p, i) => {
         if (i === index) {
           p.name = value;
@@ -52,8 +67,15 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
   };
 
   const removeColumn = index => {
-    setColumns(prev => {
+    setSubtasks(prev => {
       return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleChange = e => {
+    setTask({
+      ...task,
+      [e.target.name]: e.target.value,
     });
   };
   return (
@@ -68,20 +90,21 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
     >
       <div className="relative bg-white z-[51] rounded-md p-5 w-full max-w-md max-h-full">
         <form onSubmit={handleSubmit}>
-          <h2 className="font-bold text-lg mb-6">Add New Board</h2>
+          <h2 className="font-bold text-lg mb-6">Add New Task</h2>
           <div className="grid gap-6 mb-6">
             <div>
               <label
                 htmlFor="first_name"
                 className="block mb-2 text-sm font-medium text-[var(--clr-400)] dark:text-white"
               >
-                First name
+                Title
               </label>
               <input
                 type="text"
+                name="title"
                 id="first_name"
-                value={boardName}
-                onChange={e => setBoardName(e.target.value)}
+                value={task.title}
+                onChange={handleChange}
                 className=" border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="John"
                 required
@@ -94,12 +117,29 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
                 htmlFor="first_name"
                 className="block mb-2 text-sm font-medium text-[var(--clr-400)] dark:text-white"
               >
-                Columns
+                Description
+              </label>
+              <textarea
+                className=" border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                value={task.description}
+                rows={4}
+                name="description"
+                onChange={handleChange}
+              ></textarea>
+            </div>
+          </div>
+          <div className="grid gap-6 mb-6">
+            <div>
+              <label
+                htmlFor="first_name"
+                className="block mb-2 text-sm font-medium text-[var(--clr-400)] dark:text-white"
+              >
+                Subtasks
               </label>
               {/* Columns inputs */}
 
               <div className="mb-3 space-y-2">
-                {columns.map((column, i) => (
+                {subtasks.map((column, i) => (
                   <div key={i} className="flex items-center gap-4">
                     <input
                       type="text"
@@ -132,9 +172,32 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
                 color={"var(--primary-color)"}
                 bg={"rgba(99, 95, 199, 0.10)"}
               >
-                Add New Column
+                Add New Sub Task
               </PrimaryBtn>
             </div>
+          </div>
+
+          <div className="grid gap-2 mb-6">
+            <label
+              htmlFor="statuses"
+              className="block mb-2 text-sm font-medium text-[var(--clr-400)] dark:text-white"
+            >
+              Status
+            </label>
+            <select
+              name="status_id"
+              onChange={handleChange}
+              id="statuses"
+              value={task.status_id}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            >
+              <option value={""}>Choose a column</option>
+              {columns.map(col => (
+                <option key={col.id} value={col.id}>
+                  {col.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <PrimaryBtn
@@ -144,7 +207,7 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
             color={"#fff"}
             bg={"var(--primary-color)"}
           >
-            Create New Board
+            Create New Task
           </PrimaryBtn>
         </form>
       </div>
@@ -152,4 +215,4 @@ const BasicModal = ({ modal, setModal, setBoards }) => {
   );
 };
 
-export default BasicModal;
+export default TaskModal;

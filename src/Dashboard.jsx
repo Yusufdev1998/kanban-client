@@ -1,49 +1,22 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BasicModal from "./components/BasicModal";
 import BasicSidebar from "./components/BasicSidebar";
 import Content from "./components/Content";
-import { getBoards, getColumns } from "./utils/request";
-import { useParams } from "react-router-dom";
+import TaskModal from "./components/TaskModal";
+import useDashboard from "./hooks/useDashboard";
+import EditTaskModal from "./components/EditTaskModal";
 
 export default function Dashboard() {
   const [modal, setModal] = useState(false);
-  const [boards, setBoards] = useState([]);
+  const [taskModal, setTaskModal] = useState(false);
+  const [editTaskModal, setEditTaskModal] = useState({
+    open: false,
+    task: null,
+  });
 
-  const [columns, setColumns] = useState([]);
-  const params = useParams();
-  const boardId = params.id;
-
-  useEffect(() => {
-    getInitBoards();
-  }, []);
-
-  useEffect(() => {
-    if (boardId) {
-      getColumnsData();
-    }
-  }, [boardId]);
-
-  const getColumnsData = async () => {
-    try {
-      const data = await getColumns(boardId);
-      setColumns(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
+  const { boards, columns, loading, setBoards, setColumns } = useDashboard();
   console.log(columns);
-
-  const getInitBoards = async () => {
-    try {
-      const data = await getBoards();
-      setBoards(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
   return (
     <>
       <div className="bg-[var(--clr-200)] dark:bg-[var(--clr-800)] h-full">
@@ -79,7 +52,12 @@ export default function Dashboard() {
         </aside>
 
         <div className="sm:ml-[300px]">
-          <Content columns={columns}></Content>
+          <Content
+            setEditTaskModal={setEditTaskModal}
+            setTaskModal={setTaskModal}
+            columnLoading={loading}
+            columns={columns}
+          ></Content>
         </div>
       </div>
       <BasicModal
@@ -87,6 +65,18 @@ export default function Dashboard() {
         setBoards={setBoards}
         modal={modal}
       ></BasicModal>
+      <TaskModal
+        columns={columns}
+        setColumns={setColumns}
+        setModal={setTaskModal}
+        modal={taskModal}
+      ></TaskModal>
+      <EditTaskModal
+        modal={editTaskModal}
+        columns={columns}
+        setColumns={setColumns}
+        setModal={setEditTaskModal}
+      ></EditTaskModal>
     </>
   );
 }

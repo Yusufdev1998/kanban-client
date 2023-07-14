@@ -1,3 +1,4 @@
+import "react-loading-skeleton/dist/skeleton.css";
 import Dashboard from "./Dashboard";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Login from "./components/Login";
